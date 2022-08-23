@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .wrapper {
+        width: 1500px;
+        height: 3000px;
+        background-color: black;
+        }
+
+        .button {
+            background-color: goldenrod;
+            border-radius: 0;
+            border-width: 0;
+            padding: 10px;
+            width: 200px;
+            display: flex;
+            justify-content: center;
+            color: white;
+        }
+
+        .button:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <button class="button">Узнасть размеры экрана</button>
+    </div>
+
+
+    <script>
+        let button = document.querySelector('.button');
+
+        // размер экрана девайса
+        let sizeScreen = {width: window.screen.width, height: window.screen.height};
+
+        // размер вьюпорта с полосой прокрутки
+        let siseViewIncScroll = {width: window.innerWidth, height: window.innerHeight};
+
+        // размер вьюпорта без полосы прокрутки
+        let siseView = {width: document.documentElement.clientWidth, height: document.documentElement.clientHeight};
+
+        function getSize() {
+        alert(`
+        Экран: ширина = ${sizeScreen.width}px, высота = ${sizeScreen.height}px; \n 
+        Область просмотра, включая полосу прокрутки:
+        ширина = ${siseViewIncScroll.width}px, высота = ${siseViewIncScroll.height}px; \n
+        Область просмотра без полосы прокрутки:
+        ширина = ${siseView.width}px, высота = ${siseView.height}px;
+        `);
+        }
+
+        button.addEventListener('click', getSize);
+    </script>
+</body>
+</html>
+

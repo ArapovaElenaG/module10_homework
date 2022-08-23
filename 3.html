@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            padding: 10px;
+        }
+
+        .wrapper {
+            display: flex;
+            margin-bottom: 10px;
+        }   
+
+        .input {
+            width: 300px;
+            min-width: 150px;
+            height: 30px;
+            border-width: 3px;
+            border-color: lightblue;
+            border-style: solid;
+            outline: none;
+         }
+         
+        .button_send, .button_location {
+            width: 100px;
+            min-width: 100px;
+            height: 30px;
+            background-color: lightblue;
+            border-radius: 0;
+            border-width: 0;
+            text-align: center;
+        }
+
+        .button_send {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+        .output {
+            max-width: 520px;
+            min-width: 370px;
+            height: 300px;
+            border-width: 3px;
+            border-color: lightblue;
+            border-style: solid;
+            overflow: auto;
+            padding-bottom: 10px;
+        }
+
+        .item {
+            width: 280px;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px auto 0;
+        }
+
+
+        .connecting {
+            display: flex;
+            justify-content: center;
+            background-color: lightblue;
+            margin: 10px auto 0;
+        }
+
+        .icon {
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .status_on {
+            background-color: rgb(173, 218, 143);
+            margin: 10px auto 0;
+            text-align: center;
+        }
+
+        .status_off {
+            background-color: lightpink;
+            margin: 10px auto 0;
+            text-align: center;
+        }
+
+        .error {
+            color: white;
+            background-color: red;
+            margin: 10px auto 0;
+            text-align: center;
+        }
+
+        .outgoing {
+            min-width: 100px;
+            background-color: rgb(184, 155, 211);
+            margin: 10px 5px 0 auto;
+        }
+
+        .incoming {
+            min-width: 100px;
+            background-color: khaki;
+            margin: 10px auto 0 5px;
+        }
+
+        .connecting--magic .icon {
+            animation-duration: 1s;
+            animation-name: magic;
+            animation-iteration-count: infinite;
+        }
+
+        @keyframes magic {
+            from {
+                transform: rotate(0);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <input type="text" class="input" placeholder="Здесь вводится текст сообщения">
+        <button type="submit" class="button_send">Отправить</button>
+        <button class="button_location">Гео-локация</button>
+    </div>
+    <div class="output">
+        <div class="item connecting connecting--magic">Соединение устанавливается 
+            <div class="icon">
+                <svg class="arrow-clockwise" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M3.17 6.706a5 5 0 0 1 7.103-3.16.5.5 0 1 0 .454-.892A6 6 0 1 0 13.455 5.5a.5.5 0 0 0-.91.417 5 5 0 1 1-9.375.789z"/>
+                    <path fill-rule="evenodd" d="M8.147.146a.5.5 0 0 1 .707 0l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 1 1-.707-.708L10.293 3 8.147.854a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+const url = "wss://echo-ws-service.herokuapp.com";
+let input = document.querySelector('.input');
+let buttonSend = document.querySelector('.button_send');
+let buttonLocation = document.querySelector('.button_location');
+let output = document.querySelector('.output');
+let connecting = document.querySelector('.connecting');
+let websocket;
+
+// ФУНКЦИЯ СОЕДИНЕНИЯ
+function makeConnection() {        
+    websocket = new WebSocket(url);
+    // открытие канала
+    websocket.onopen = function(evt) {
+        displayStatusOn ('Соединение установлено');
+    }
+    // закрытие канала
+    websocket.onclose = function(evt) {
+        displayStatusOff ('Соединение прервано');
+    }
+    // входящее сообщение
+    websocket.onmessage = function(evt) {
+        if (!evt.data.includes('Гео-локация</a>')) {
+          displayIncoming (evt.data);
+        }
+    }
+    // ошибка
+    websocket.onerror = function(evt) {
+        displayError (`Ошибка соединения: ${evt.data}`);
+    }
+}
+
+// ФУНКЦИЯ ОТПРАВКИ СООБЩЕНИЯ
+function sendMessage() {
+    if (input.value) {
+        websocket.send(input.value);
+        displayOutgoing(input.value);
+        input.value = null;
+    } else {return};
+}
+
+// ОТОБРАЖЕНИЕ В ОУТПУТЕ: 
+// отображения исходящего сообщения
+function displayOutgoing (message) {
+    // создаем ноду параграфа
+    let paragraphOutgoing = document.createElement('p');
+    // добавляем к нему класс "status"
+    paragraphOutgoing.classList.add("item", "outgoing");
+    // вставляем в него текст сообщения
+    paragraphOutgoing.textContent = message;
+    // вставляем параграф в оутпут
+    output.appendChild(paragraphOutgoing);
+  
+    // let paragraphOutgoing = `<p class="item outgoing">${message}</p>`; - нельзя ('<div>' - не отобразится)
+}
+
+// отображения входящего сообщения
+function displayIncoming (message) {
+    let paragraphIncoming = document.createElement('p');
+    paragraphIncoming.classList.add("item", "incoming");
+    paragraphIncoming.textContent = message;
+    output.appendChild(paragraphIncoming);
+}
+
+// функция отображения открытия канала
+function displayStatusOn (message) {
+    connecting.innerHTML = message;
+    connecting.classList.remove("connecting--magic");
+    connecting.classList.add("status_on");
+}
+
+// отображение закрытия канала (через createElement)
+function displayStatusOff (message) {
+    let paragraphStatusOff = document.createElement('p');
+    paragraphStatusOff.classList.add("item", "status_off");
+    paragraphStatusOff.textContent = message;
+    output.appendChild(paragraphStatusOff);
+}
+
+// функция отображения ошибки
+function displayError (message) {
+    connecting.innerHTML = message;
+    connecting.classList.toggle("connecting--magic", "connecting--magic");
+    connecting.classList.toggle("error"); 
+}
+
+// ОТПРАВКА ГЕО-ЛОКАЦИИ
+function sendGeolocation() {
+    if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(success, error);
+    } else {
+    displayStatusOff ('Гео-локация не поддерживается');
+    }
+}
+
+// Функция, выводящая текст об ошибке гео-локации
+function error() {
+    displayStatusOff ('Невозможно получить местоположение');
+}
+
+// Функция, срабатывающая при успешном получении геолокации
+function success (position)  {
+    const latitude  = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    let linkCoords = `<a href="https://www.openstreetmap.org/#map=18/${latitude}/${longitude}" target="_blank">Гео-локация</a>`;
+    websocket.send(linkCoords);
+    let paragraphLink = `<p class="item outgoing">${linkCoords}</p>`; 
+    output.innerHTML += paragraphLink;
+}
+
+// ОБРАБОТЧИКИ
+// обработчик запуска соединения
+document.addEventListener("DOMContentLoaded", makeConnection);
+
+// обработчик отправки сообщения
+buttonSend.addEventListener('click', sendMessage);
+
+// обработчик отправки гео-локации
+buttonLocation.addEventListener('click', sendGeolocation);
+
+
+
+    </script>
+</body>
+</html>
+
